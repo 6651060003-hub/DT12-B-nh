@@ -112,6 +112,7 @@ void PhoneBook::displayZA() const {
         cout << left << setw(20) << curr->name << setw(15) << curr->phone << setw(25) << curr->email << endl;
         curr = curr->prev;
     }
+
 }
 // Tìm node chính xác theo Tên hoặc SĐT
 ContactNode* PhoneBook::findContact(const string& query) {
@@ -179,4 +180,5 @@ void PhoneBook::bubbleSortByName() {
         }
         lptr = ptr1;
     } while (swapped);
+
 }
