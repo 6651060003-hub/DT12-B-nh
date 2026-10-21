@@ -114,6 +114,107 @@ void PhoneBook::displayZA() const {
     }
 
 }
+// Thêm cuộc gọi mới cho một liên hệ
+void PhoneBook::addCallLog(const string& phone, const string& dateTime, int duration, const string& type) {
+    ContactNode* contact = findContact(phone);
+    if (contact == nullptr) {
+        cout << "=> Khong tim thay so dien thoai de ghi nhan cuoc goi!\n";
+        return;
+    }
+
+    CallLog* newLog = new CallLog(dateTime, duration, type);
+    newLog->next = contact->callHistoryHead;
+    contact->callHistoryHead = newLog;
+    cout << "=> Da them lich su cuoc goi cho " << contact->name << endl;
+}
+
+// Hiển thị lịch sử cuộc gọi của một liên hệ
+void PhoneBook::displayCallHistory(const string& query) const {
+    ContactNode* contact = const_cast<PhoneBook*>(this)->findContact(query);
+    if (contact == nullptr) {
+        cout << "=> Khong tim thay lien he!\n";
+        return;
+    }
+
+    cout << "\n=== LỊCH SỬ CUỘC GỌI CỦA: " << contact->name << " (" << contact->phone << ") ===\n";
+    CallLog* curr = contact->callHistoryHead;
+    if (curr == nullptr) {
+        cout << "=> Chưa co lich su cuoc goi.\n";
+        return;
+    }
+
+    cout << left << setw(25) << "Thoi Gian" << setw(15) << "Thoi Luong (s)" << setw(15) << "Loai Cuoc Goi" << endl;
+    cout << string(55, '-') << endl;
+    while (curr != nullptr) {
+        cout << left << setw(25) << curr->dateTime << setw(15) << curr->duration << setw(15) << curr->type << endl;
+        curr = curr->next;
+    }
+}
+
+// Lưu danh bạ vào File
+void PhoneBook::saveToFile(const string& filename) const {
+    ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        cout << "=> Loi: Khong the mo file de ghi!\n";
+        return;
+    }
+
+    ContactNode* curr = head;
+    while (curr != nullptr) {
+        outFile << "CONTACT|" << curr->name << "|" << curr->phone << "|" << curr->email << "\n";
+        CallLog* log = curr->callHistoryHead;
+        while (log != nullptr) {
+            outFile << "LOG|" << log->dateTime << "|" << log->duration << "|" << log->type << "\n";
+            log = log->next;
+        }
+        curr = curr->next;
+    }
+    outFile.close();
+    cout << "=> Da luu danh ba vao file thành cong: " << filename << endl;
+}
+
+// Đọc danh bạ từ File
+void PhoneBook::loadFromFile(const string& filename) {
+    ifstream inFile(filename);
+    if (!inFile.is_open()) {
+        cout << "=> File chua ton tai hoac khong the mo. Bat dau voi danh ba rong.\n";
+        return;
+    }
+
+    string line;
+    ContactNode* lastAddedContact = nullptr;
+
+    while (getline(inFile, line)) {
+        if (line.empty()) continue;
+
+        stringstream ss(line);
+        string tag;
+        getline(ss, tag, '|');
+
+        if (tag == "CONTACT") {
+            string name, phone, email;
+            getline(ss, name, '|');
+            getline(ss, phone, '|');
+            getline(ss, email, '|');
+            addContact(name, phone, email);
+            lastAddedContact = findContact(phone);
+        } else if (tag == "LOG" && lastAddedContact != nullptr) {
+            string dateTime, type, durationStr;
+            getline(ss, dateTime, '|');
+            getline(ss, durationStr, '|');
+            getline(ss, type, '|');
+            int duration = stoi(durationStr);
+
+            CallLog* newLog = new CallLog(dateTime, duration, type);
+            newLog->next = lastAddedContact->callHistoryHead;
+            lastAddedContact->callHistoryHead = newLog;
+        }
+    }
+    inFile.close();
+    cout << "=> Da tai danh ba tu file thanh cong!\n";
+
+
+}
 // Tìm node chính xác theo Tên hoặc SĐT
 ContactNode* PhoneBook::findContact(const string& query) {
     ContactNode* curr = head;
@@ -180,5 +281,6 @@ void PhoneBook::bubbleSortByName() {
         }
         lptr = ptr1;
     } while (swapped);
+
 
 }
